@@ -32,12 +32,12 @@ $~~~~~~$
 
 ### Technologies Used
 
-- Apache Airflow ( v2.5.3 )
-- Docker
-- Python
+- Apache Airflow(v2.10.2)
+- Docker >=26
+- Python >=3.12
 - Shell Scripting
 - Python Flask Wtforms
-- JIRA (v6.3.12)
+- JIRA(v6.3.12)
 
 
 #### Important Note
