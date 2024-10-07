@@ -55,6 +55,14 @@ module load python/3.9.0
 python miso_samplesheet_10X.py <num>
 """
 
+verify_prefile_task = PythonOperator(
+    dag=dag,
+    task_id='run_verify_file',
+    retries=1,
+    provide_context=True,
+    python_callable=verify_file_exists,
+)
+
 miso_samplesheet_generate_command = """
         rsync -av /scratch/gencore/workflows/latest/miso_samplesheet_gen.py "{{ dag_run.conf["scratch_dir"] }}/"
         cd "{{ dag_run.conf["scratch_dir"] }}/"
@@ -160,7 +168,7 @@ email_post_sent_task = PythonOperator(
 )
 
 """Defining the DAG workflow"""
-rsync_work_to_scratch_task >> email_pre_sent_task  >> miso_samplesheet_generate_task >> demux_rev_comp_task >> adapter_string_replace_task >> validate_samplename_task >> demultiplex_task >> submit_qc_workflow_task >> email_post_sent_task >> archive_scratch_folder_task
+rsync_work_to_scratch_task >> verify_prefile_task >> email_pre_sent_task  >> miso_samplesheet_generate_task >> demux_rev_comp_task >> adapter_string_replace_task >> validate_samplename_task >> demultiplex_task >> submit_qc_workflow_task >> email_post_sent_task >> archive_scratch_folder_task
 
 
 """Procedure ends"""
