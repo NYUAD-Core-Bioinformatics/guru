@@ -11,7 +11,7 @@ from seq_dags.demultiplex_seq import run_demultiplex_task
 from seq_dags.email_pre_seq import run_pre_email_task
 from seq_dags.email_post_seq import run_post_email_task
 from seq_dags.submit_qc_workflow_seq import submit_qc_workflow_to_slurm
-
+from seq_dags.verify_prefile import verify_file_exists 
 
 """Loading jira module"""
 from nyuad_cgsb_jira_client.jira_client import jira_client

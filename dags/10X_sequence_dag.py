@@ -10,6 +10,7 @@ from tenx_dags.archive_ten  import archive_scratch_dir_folder
 from tenx_dags.demultiplex_ten import run_demultiplex_task
 from tenx_dags.email_pre_ten import run_pre_email_task
 from tenx_dags.email_post_ten import run_post_email_task
+from tenx_dags.verify_prefile import verify_file_exists 
 
 """Loading jira module""" 
 from nyuad_cgsb_jira_client.jira_client import jira_client
