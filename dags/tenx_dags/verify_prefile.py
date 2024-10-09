@@ -8,7 +8,7 @@ from airflow.providers.ssh.hooks.ssh import SSHHook
 
 def verify_file_exists(**kwargs):
     dag_run = kwargs['dag_run']
-    demux_dir = dag_run.conf['demux_dir']
+    work_dir = dag_run.conf['work_dir']
     scratch_dir = dag_run.conf['scratch_dir']
     email_id = dag_run.conf['email_id']
     miso_id = dag_run.conf['miso_id']
