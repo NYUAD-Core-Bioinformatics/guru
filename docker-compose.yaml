@@ -17,6 +17,7 @@ x-airflow-common:
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__WEBSERVER__HIDE_PAUSED_DAGS_BY_DEFAULT: 'true'
     AIRFLOW__WEBSERVER__DAG_DEFAULT_VIEW: 'graph'
+    AIRFLOW__SCHEDULER__ALLOWED_RUN_ID_PATTERN: '^[A-Za-z0-9_.~:+-/ ]+$'
     AIRFLOW__CORE__DEFAULT_TIMEZONE: 'Asia/Dubai'
     AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: 'Asia/Dubai'
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
