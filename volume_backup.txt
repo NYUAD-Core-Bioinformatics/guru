@@ -7,7 +7,7 @@ $docker run --rm -v guru_postgres-db-volume:/volume -v $(pwd)/backup:/backup alp
 
 To import volume backup
 $docker volume create guru_postgres-db-volume
-$docker run --rm -v guru_postgres-db-volume:/volume -v ./backup:/backup alpine sh -c "tar -xzvf /backup/backup.tar.gz -C /volume --strip-components=1"
+$docker run --rm -v guru_postgres-db-volume:/volume -v $(pwd)/backup:/backup alpine sh -c "tar -xzvf /backup/backup.tar.gz -C /volume --strip-components=1"
 
 Then modify the docker_compose.yaml file
 
