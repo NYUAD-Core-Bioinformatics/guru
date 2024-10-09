@@ -124,7 +124,7 @@ class SequenceBaseView(AppBuilderBaseView):
     @csrf.exempt 
     def seqrun(self):
         now = datetime.now()
-        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        dt_string = now.strftime("%d-%m-%Y-%H:%M:%S")
         form = MyForm(request.form)
         if  request.method == 'POST' and form.validate():
             run_id = form.projname.data + dt_string

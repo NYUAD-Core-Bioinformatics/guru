@@ -97,7 +97,7 @@ class Singlecell_10XBaseView(AppBuilderBaseView):
     @csrf.exempt 
     def seqrun(self):
         now = datetime.now()
-        dt_string = now.strftime("%d_%m_%Y %H_%M_%S")
+        dt_string = now.strftime("%d-%m-%Y-%H:%M:%S")
         form = MyForm(request.form)
         if  request.method == 'POST' and form.validate():
             scratch_dir_value = form.work_dir.data.replace("/archive/gencoreseq", "/scratch/gencore")
