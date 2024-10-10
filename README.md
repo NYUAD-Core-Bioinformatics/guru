@@ -34,7 +34,7 @@ $~~~~~~$
 
 - Apache Airflow(v2.10.2)
 - Docker >=26
-- Python >=3.12
+- Python >=3.11
 - Shell Scripting
 - Python Flask Wtforms
 - JIRA(v6.3.12)
@@ -196,7 +196,7 @@ sh pip_jira.sh
 Initialize airflow db and this will create airflow.cfg in the AIRFLOW_HOME directory (defined above).
 
 ``` bash
-airflow db init
+airflow db migrate
 ```
 
 Update the Airflow connection parameters for ssh, smtp and mysql. Then excecute the script.
@@ -235,18 +235,13 @@ airflow users create \
 --email <specify-email>
 ```
 
-In order to start the Airflow instance (according to the instructions at [Airflow](https://airflow.apache.org/docs/apache-airflow/2.5.3/start.html)), we need to open 2 terminal windows (these can be 2 separate tabs).
-In the first tab (or window), launch the command below to start the Airflow scheduler service. 
+In order to start the Airflow instance (according to the instructions at [Airflow](https://airflow.apache.org/docs/apache-airflow/2.10.2/start.html))
+Launch the command below. 
 
 ``` bash
-airflow scheduler
+airflow standalone
 ```
 
-Once the above command starts (and there are no errors), launch the second command (below) in the second tab (or window).
-
-``` bash
-airflow webserver
-```
 
 To access the Airflow User Interface, open a web browser and go to [http://IP-address:8080](http://IP-address:8080)
 and use the following username/password credentials **airflow**/**airflow**.

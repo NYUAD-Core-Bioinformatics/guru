@@ -2,9 +2,9 @@ import logging
 import smtplib
 from email.message import EmailMessage
 from airflow.hooks.base import BaseHook
-from nyuad_cgsb_jira_client.jira_client import jira_client
 from airflow.exceptions import AirflowFailException
 from airflow.providers.ssh.hooks.ssh import SSHHook
+from nyuad_cgsb_jira_client.jira_client import jira_client
 
 def verify_file_exists(**kwargs):
     dag_run = kwargs['dag_run']

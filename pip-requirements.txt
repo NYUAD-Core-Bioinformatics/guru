@@ -1,10 +1,10 @@
 apache-airflow==2.10.2
-apache-airflow-providers-common-sql==1.16.0
-apache-airflow-providers-ftp==3.11.0
-apache-airflow-providers-http==4.13.0
-apache-airflow-providers-imap==3.7.0
-apache-airflow-providers-sqlite==3.9.0
-apache-airflow-providers-ssh==3.13.1
+apache-airflow-providers-common-sql
+apache-airflow-providers-ftp
+apache-airflow-providers-http
+apache-airflow-providers-imap
+apache-airflow-providers-sqlite
+apache-airflow-providers-ssh
 Flask
 Flask-AppBuilder
 Flask-Babel
@@ -15,5 +15,6 @@ Flask-Login
 Flask-Session
 Flask-SQLAlchemy
 Flask-WTF
-mysql-connector-python==9.0.0
-mysqlclient==2.2.4
+pandas
+jira==3.2.0
+pymysql
