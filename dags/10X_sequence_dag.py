@@ -86,6 +86,17 @@ demultiplex_task = PythonOperator(
     dag=dag
 )
 
+"""Verify the output of demux, whether it processed correctly"""
+demux_validation = """
+        grep "Pipestance completed successfully"  {{ dag_run.conf["scratch_dir"] }}/*.out
+"""
+
+demux_validation_task = SSHOperator(
+    task_id='demux_validation',
+    ssh_hook=ssh_hook,
+    command=demux_validation,
+    dag=dag
+)
 
 """Triggering a email notication and update jira ticket during the starting"""
 email_pre_sent_task = PythonOperator(
@@ -114,7 +125,7 @@ email_post_sent_task = PythonOperator(
 )
 
 """Defining the DAG workflow"""
-rsync_work_to_scratch_task >> verify_prefile_task >> email_pre_sent_task  >> miso_samplesheet_generate_task >> demultiplex_task >> email_post_sent_task >> archive_scratch_folder_task
+rsync_work_to_scratch_task >> verify_prefile_task >> email_pre_sent_task  >> miso_samplesheet_generate_task >> demultiplex_task >> demux_validation_task >> email_post_sent_task >> archive_scratch_folder_task
 
 
 """Procedure ends"""

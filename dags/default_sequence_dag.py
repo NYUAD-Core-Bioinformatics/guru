@@ -132,6 +132,18 @@ demultiplex_task = PythonOperator(
     dag=dag
 )
 
+"""Verify the output of demux, whether it processed correctly"""
+demux_validation = """
+        grep "Processing completed with 0 errors and 0 warnings"  {{ dag_run.conf["scratch_dir"] }}/*.out" 
+"""
+
+demux_validation_task = SSHOperator(
+    task_id='demux_validation',
+    ssh_hook=ssh_hook,
+    command=demux_validation,
+    dag=dag
+)
+
 """Defining QC workflow using Python operator"""
 submit_qc_workflow_task = PythonOperator(
     dag=dag,
@@ -168,7 +180,7 @@ email_post_sent_task = PythonOperator(
 )
 
 """Defining the DAG workflow"""
-rsync_work_to_scratch_task >> verify_prefile_task >> email_pre_sent_task  >> miso_samplesheet_generate_task >> demux_rev_comp_task >> adapter_string_replace_task >> validate_samplename_task >> demultiplex_task >> submit_qc_workflow_task >> email_post_sent_task >> archive_scratch_folder_task
+rsync_work_to_scratch_task >> verify_prefile_task >> email_pre_sent_task  >> miso_samplesheet_generate_task >> demux_rev_comp_task >> adapter_string_replace_task >> validate_samplename_task >> demultiplex_task >> demux_validation_task >> submit_qc_workflow_task >> email_post_sent_task >> archive_scratch_folder_task
 
 
 """Procedure ends"""
