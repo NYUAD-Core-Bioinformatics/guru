@@ -134,7 +134,7 @@ demultiplex_task = PythonOperator(
 
 """Verify the output of demux, whether it processed correctly"""
 demux_validation = """
-        grep "Processing completed with 0 errors and 0 warnings"  {{ dag_run.conf["scratch_dir"] }}/*.out" 
+        grep "Processing completed with 0 errors and 0 warnings"  {{ dag_run.conf["scratch_dir"] }}/*.err" 
 """
 
 demux_validation_task = SSHOperator(

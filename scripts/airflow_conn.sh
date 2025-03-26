@@ -13,3 +13,10 @@ airflow connections add guru_email --conn-type email --conn-host smtp.gmail.com 
 
 ## Defining Mysql Connection 
 airflow connections add guru_mysql --conn-type mysql --conn-login <user> --conn-password <pass> --conn-host <hostname or IP address > --conn-port <port> --conn-schema <database name> --conn-extra '{"ssl_mode": "DISABLED"}'
+
+
+## Optional user configuration
+airflow users delete -u airflow
+
+##Create gencore user
+airflow users create --username airflow --password airflow --firstname admin  --lastname admin --role Admin --email test@example.com
