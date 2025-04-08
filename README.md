@@ -59,7 +59,7 @@ You can install GURU using [pip](https://pip.pypa.io/en/stable/) or  [docker](ht
 #### Cloning the repository
 
 ```
-git clone https://github.com/nyuad-corebio/guru
+git clone https://github.com/NYUAD-Core-Bioinformatics/guru
 cd guru
 ```
 
@@ -148,7 +148,7 @@ Installation using pip:-
 #### Cloning the repository
 
 ```
-git clone https://github.com/nyuad-corebio/guru
+git clone https://github.com/NYUAD-Core-Bioinformatics/guru
 cd guru
 ```
 
@@ -313,11 +313,11 @@ $~~~~$
 
 ## Contact
 
-If you need to contact us for feedback, queries, or to raise an issue, you can do so using the issues page [Github issue](https://github.com/nyuad-corebio/guru/issues).
+If you need to contact us for feedback, queries, or to raise an issue, you can do so using the issues page [Github issue](https://github.com/NYUAD-Core-Bioinformatics/guru/issues).
 
 ## Citation
 
-If you use GURU in your research or publications, please cite our [Github page](https://github.com/nyuad-corebio/guru).
+If you use GURU in your research or publications, please cite our [Github page](https://github.com/NYUAD-Core-Bioinformatics/guru).
 
 ## Acknowledgements
 
