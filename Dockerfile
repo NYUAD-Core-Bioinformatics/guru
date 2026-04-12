@@ -19,6 +19,6 @@ RUN chmod -R 777 /opt/airflow/pkgs
 USER airflow
 WORKDIR /opt/airflow/pkgs
 #Install custom build jira python module
-RUN sh pip_custom.sh
+RUN sh pip_docker_jira.sh
 RUN pip install -U  --force-reinstall PyJWT
 WORKDIR /opt/airflow
