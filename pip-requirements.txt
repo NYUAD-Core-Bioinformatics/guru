@@ -1,4 +1,4 @@
-apache-airflow==2.10.2
+apache-airflow==2.11.2
 apache-airflow-providers-common-sql
 apache-airflow-providers-ftp
 apache-airflow-providers-http
@@ -19,3 +19,5 @@ Flask-WTF
 pandas
 jira==3.2.0
 pymysql
+pydantic
+setuptools==75.8.0

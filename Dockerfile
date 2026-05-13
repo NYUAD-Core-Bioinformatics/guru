@@ -1,4 +1,4 @@
-FROM apache/airflow:2.10.2
+FROM apache/airflow:2.11.2
 USER root
 #Setting Dubai TZ
 ENV TZ=Asia/Dubai

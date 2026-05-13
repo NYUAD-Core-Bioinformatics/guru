@@ -32,9 +32,9 @@ $~~~~~~$
 
 ### Technologies Used
 
-- Apache Airflow(v2.10.2)
+- Apache Airflow(v2.11.2)
 - Docker >=26
-- Python >=3.11
+- Python <= 3.12
 - Shell Scripting
 - Python Flask Wtforms
 - JIRA(v6.3.12)
@@ -174,12 +174,14 @@ export OAUTH_TOKEN_SECRET=<token_secret>
 ```
 
 
-Install the prerequisite python packages using commands below.
+Install the prerequisite python packages using commands below. 
 
 Note:- 
-- Python >= 3.11
+- Python <= 3.12
+- We recommend install python package inside a conda environment.
 
 ``` bash
+conda install -c conda-forge python=3.12
 pip3 install -r pip-requirements.txt
 ```
 
@@ -235,7 +237,7 @@ airflow users create \
 --email <specify-email>
 ```
 
-In order to start the Airflow instance (according to the instructions at [Airflow](https://airflow.apache.org/docs/apache-airflow/2.10.2/start.html))
+In order to start the Airflow instance (according to the instructions at [Airflow](https://airflow.apache.org/docs/apache-airflow/2.11.2/start.html))
 Launch the command below. 
 
 ``` bash
