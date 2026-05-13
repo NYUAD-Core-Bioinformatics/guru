@@ -33,7 +33,7 @@ $~~~~~~$
 ### Technologies Used
 
 - Apache Airflow(v2.11.2)
-- Docker >=26
+- Docker 
 - Python <= 3.12
 - Shell Scripting
 - Python Flask Wtforms
@@ -52,7 +52,7 @@ You can install GURU using [pip](https://pip.pypa.io/en/stable/) or  [docker](ht
  
 #### Prerequisites
 
-1. [Install Docker Latest Version V23.0.2+](https://docs.docker.com/engine/install/)
+1. [Install Docker Latest Version](https://docs.docker.com/engine/install/)
 2. MISO LIMS ( Optional:- iskylims or other LIMS tools )
 3. JIRA ( Optional:- Redmine or other project management software )
 
