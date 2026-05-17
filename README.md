@@ -181,7 +181,7 @@ Note:-
 - We recommend install python package inside a conda environment.
 
 ``` bash
-conda install -c conda-forge python=3.12
+conda install -c conda-forge python=3.12 mysqlclient
 pip3 install -r pip-requirements.txt
 ```
 
