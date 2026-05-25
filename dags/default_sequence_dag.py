@@ -47,14 +47,6 @@ rsync_work_to_scratch_task = SSHOperator(
 )
 
 
-"""Defining samplesheet generate task, using SSHoperator which triggered a python script on remote machine.
-for eg:-
-$rsync /scratch/scripts/miso_samplesheet_10X.py /scratch/test/
-cd /scratch/test/
-module load python/3.9.0
-python miso_samplesheet_10X.py <num>
-"""
-
 verify_prefile_task = PythonOperator(
     dag=dag,
     task_id='run_verify_file',
@@ -64,10 +56,10 @@ verify_prefile_task = PythonOperator(
 )
 
 miso_samplesheet_generate_command = """
-        rsync -av /scratch/gencore/workflows/latest/miso_samplesheet_gen.py "{{ dag_run.conf["scratch_dir"] }}/"
+        rsync -av /scratch/gencore/workflows/guru/miso-samplesheet-bcl.py "{{ dag_run.conf["scratch_dir"] }}/"
         cd "{{ dag_run.conf["scratch_dir"] }}/"
         module load python/3.9.0
-        python miso_samplesheet_gen.py {{ dag_run.conf["miso_id"]}}
+        python miso-samplesheet-bcl.py {{ dag_run.conf["miso_id"]}}
 """
 
 miso_samplesheet_generate_task = SSHOperator(
@@ -80,9 +72,9 @@ miso_samplesheet_generate_task = SSHOperator(
 """Enabled the reverse complement script"""
 
 demux_rev_comp_command = """
-        rsync -av /scratch/gencore/workflows/latest/demux-revComp.sh "{{ dag_run.conf["scratch_dir"] }}/"
+        rsync -av /scratch/gencore/workflows/guru/demux-revComp-mixbp-bcl.sh "{{ dag_run.conf["scratch_dir"] }}/"
         cd "{{ dag_run.conf["scratch_dir"] }}/"
-        "{{ dag_run.conf["scratch_dir"] }}/"demux-revComp.sh {{ dag_run.conf["reverse_id"]}} 
+        "{{ dag_run.conf["scratch_dir"] }}/"demux-revComp-mixbp-bcl.sh {{ dag_run.conf["reverse_id"]}} 
 """
 demux_rev_comp_task = SSHOperator(
     task_id='demux_rev_comp',
@@ -90,6 +82,26 @@ demux_rev_comp_task = SSHOperator(
     command=demux_rev_comp_command,
     retries=1,
     dag=dag
+)
+
+
+""" Basemake injection to add Override cycles"""
+
+base_mask_inject_command = """
+         rsync -av /scratch/gencore/workflows/guru/basemask-runinfo-bcl.py "{{ dag_run.conf["scratch_dir"] }}/"
+         cd "{{ dag_run.conf["scratch_dir"] }}/"
+         module load python/3.9.0
+         python basemask-runinfo-bcl.py
+"""
+
+base_mask_inject_task = SSHOperator(
+     task_id='base_mask_inject',
+     ssh_hook=ssh_hook,
+     command=base_mask_inject_command,
+     on_success_callback=None,
+     on_failure_callback=update_failure,
+     retries=1,
+     dag=dag
 )
 
 """Enabled the adapter string replace"""
@@ -107,20 +119,6 @@ adapter_string_replace_task = SSHOperator(
     dag=dag
 )
 
-"""Validating sample name '_' charactor"""
-
-validate_samplename_command = """
-        rsync -av /scratch/gencore/workflows/latest/miso_samplename_validation.sh "{{ dag_run.conf["scratch_dir"] }}/"
-        cd "{{ dag_run.conf["scratch_dir"] }}/"
-        "{{ dag_run.conf["scratch_dir"] }}/"miso_samplename_validation.sh
-"""
-validate_samplename_task = SSHOperator(
-    task_id='validate_samplename',
-    ssh_hook=ssh_hook,
-    command=validate_samplename_command,
-    retries=1,
-    dag=dag
-)
 
 
 """Defining the demultiplex task using Python operator"""
@@ -129,18 +127,6 @@ demultiplex_task = PythonOperator(
     retries=1,
     python_callable=run_demultiplex_task,
     provide_context=True,
-    dag=dag
-)
-
-"""Verify the output of demux, whether it processed correctly"""
-demux_validation = """
-        grep "Processing completed with 0 errors and 0 warnings"  {{ dag_run.conf["scratch_dir"] }}/*.err" 
-"""
-
-demux_validation_task = SSHOperator(
-    task_id='demux_validation',
-    ssh_hook=ssh_hook,
-    command=demux_validation,
     dag=dag
 )
 
@@ -180,7 +166,6 @@ email_post_sent_task = PythonOperator(
 )
 
 """Defining the DAG workflow"""
-rsync_work_to_scratch_task >> verify_prefile_task >> email_pre_sent_task  >> miso_samplesheet_generate_task >> demux_rev_comp_task >> adapter_string_replace_task >> validate_samplename_task >> demultiplex_task >> demux_validation_task >> submit_qc_workflow_task >> email_post_sent_task >> archive_scratch_folder_task
-
+rsync_work_to_scratch_task >> verify_prefile_task >> email_pre_sent_task  >> miso_samplesheet_generate_task >> demux_rev_comp_task >> base_mask_inject_task >> adapter_string_replace_task  >> demultiplex_task >> submit_qc_workflow_task >> email_post_sent_task >> archive_scratch_folder_task
 
 """Procedure ends"""

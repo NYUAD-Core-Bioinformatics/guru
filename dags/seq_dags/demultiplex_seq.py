@@ -75,18 +75,15 @@ def generate_demultiplex_command(kwargs):
     work_dir = dag_run.conf['work_dir']
     scratch_dir = dag_run.conf['scratch_dir']
     jira_ticket = dag_run.conf['jira_ticket']
-    
+
     demultiplex_command = """mkdir -p {scratch_dir}/Unaligned && \\
     cd {scratch_dir} && \\
-    bcl2fastq -o {scratch_dir}/Unaligned \\
-    --no-lane-splitting \\
-    -p 28 \\
+    bcl-convert --bcl-input-directory {scratch_dir}/ \\
+    --output-directory {scratch_dir}/Unaligned \\
     --sample-sheet  {scratch_dir}/SampleSheet.csv \\
-    --barcode-mismatches 1 \\
-    -R {scratch_dir}""".format(
+    --no-lane-splitting true -f""".format(
         scratch_dir=scratch_dir,
         work_dir=work_dir,
-#        sample_sheet=kwargs['ti'].xcom_pull(key='sample_sheet')
     )
     dag_run.conf['demultiplex_command'] = demultiplex_command
     kwargs['ti'].xcom_push(key='demultiplex_command', value=demultiplex_command)
@@ -97,9 +94,8 @@ def run_demultiplex_task(ds, **kwargs):
     ssh_hook = SSHHook(ssh_conn_id='guru_ssh')
     ssh = ssh_hook.get_conn()
     sftp = ssh.open_sftp()
-    
+
     output = submit_demultiplex_job_to_slurm(ssh, sftp, kwargs)
     slurm_job_id = parse_slurm_submission(output)
     poll_slurm_job(ssh, slurm_job_id)
     ssh.close()
-
