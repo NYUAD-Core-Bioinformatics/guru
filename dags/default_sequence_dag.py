@@ -12,6 +12,7 @@ from seq_dags.email_pre_seq import run_pre_email_task
 from seq_dags.email_post_seq import run_post_email_task
 from seq_dags.submit_qc_workflow_seq import submit_qc_workflow_to_slurm
 from seq_dags.verify_prefile import verify_file_exists 
+from seq_dags.sequence_count import sequence_count_task
 
 """Loading jira module"""
 from nyuad_cgsb_jira_client.jira_client import jira_client
@@ -157,6 +158,14 @@ archive_scratch_folder_task = PythonOperator(
     dag=dag
 )
 
+"""Generate output of sequence count"""
+generate_sequence_count_task = PythonOperator(
+    task_id='sequence_count_sent',
+    retries=1,
+    python_callable=sequence_count_task,
+    dag=dag
+)
+
 """Triggering a email notication and update jira ticket during the finishing"""
 email_post_sent_task = PythonOperator(
     task_id='email_post_sent',
@@ -166,6 +175,6 @@ email_post_sent_task = PythonOperator(
 )
 
 """Defining the DAG workflow"""
-rsync_work_to_scratch_task >> verify_prefile_task >> email_pre_sent_task  >> miso_samplesheet_generate_task >> demux_rev_comp_task >> base_mask_inject_task >> adapter_string_replace_task  >> demultiplex_task >> submit_qc_workflow_task >> email_post_sent_task >> archive_scratch_folder_task
+rsync_work_to_scratch_task >> verify_prefile_task >> email_pre_sent_task  >> miso_samplesheet_generate_task >> demux_rev_comp_task >> base_mask_inject_task >> adapter_string_replace_task  >> demultiplex_task >> submit_qc_workflow_task >> generate_sequence_count_task  >> email_post_sent_task >> archive_scratch_folder_task
 
 """Procedure ends"""
