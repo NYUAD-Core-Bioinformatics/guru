@@ -70,24 +70,31 @@ def submit_demultiplex_job_to_slurm(ssh, sftp, kwargs):
                                                       slurm_command, logger)
     return output
 
-def generate_demultiplex_command(kwargs):
-    dag_run = kwargs['dag_run']
-    work_dir = dag_run.conf['work_dir']
-    scratch_dir = dag_run.conf['scratch_dir']
-    jira_ticket = dag_run.conf['jira_ticket']
 
-    demultiplex_command = """mkdir -p {scratch_dir}/Unaligned && \\
-    cd {scratch_dir} && \\
-    bcl-convert --bcl-input-directory {scratch_dir}/ \\
-    --output-directory {scratch_dir}/Unaligned \\
-    --sample-sheet  {scratch_dir}/SampleSheet.csv \\
-    --no-lane-splitting true -f""".format(
+def generate_demultiplex_command(kwargs):
+    dag_run = kwargs["dag_run"]
+    work_dir = dag_run.conf["work_dir"]
+    scratch_dir = dag_run.conf["scratch_dir"]
+    jira_ticket = dag_run.conf["jira_ticket"]
+
+    demultiplex_command = """if [ -d "{scratch_dir}/Unaligned" ]; then
+        rm -rf -- "{scratch_dir}/Unaligned"
+    fi
+
+    cd "{scratch_dir}" && \\
+    bcl-convert --bcl-input-directory "{scratch_dir}/" \\
+    --output-directory "{scratch_dir}/Unaligned" \\
+    --sample-sheet "{scratch_dir}/SampleSheet.csv" \\
+    --no-lane-splitting true""".format(
         scratch_dir=scratch_dir,
         work_dir=work_dir,
     )
-    dag_run.conf['demultiplex_command'] = demultiplex_command
-    kwargs['ti'].xcom_push(key='demultiplex_command', value=demultiplex_command)
 
+    dag_run.conf["demultiplex_command"] = demultiplex_command
+    kwargs["ti"].xcom_push(
+        key="demultiplex_command",
+        value=demultiplex_command,
+    )
 
 
 def run_demultiplex_task(ds, **kwargs):
