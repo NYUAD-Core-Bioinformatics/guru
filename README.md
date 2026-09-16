@@ -291,6 +291,8 @@ Below is a description of the fields.
 - `Adapter Sequence 1:-` Sequence of adapter to be trimmed for read1.
 - `Adapter Sequence 2:-` Sequence of adapter to be trimmed for read2.
 - `Working Directory:-` Full path to the location of the sequencing run folder. 
+- `Net-ID:-` (Optional) Specify your NYU Net-ID here. This is only required if you want to trigger a downstream analysis after the QC/QT process completes, and is used to map the run to your account.
+- `Downstream Workflow:-` (Optional) Select the downstream analysis workflow to run automatically once QC/QT has finished (e.g. RNAseq, WGS, WES, ATAC, ChIP etc.). Click "Add another Analysis +" to add another Net-ID/Downstream Workflow pair, allowing multiple downstream analyses (for the same or different Net-IDs) to be triggered from a single run. Use the "-" button to remove a pair. Leave this as "None" if you only want to run QC/QT and skip downstream analysis. Note: both `Net-ID` and `Downstream Workflow` must be specified together to trigger this step; if left blank, you can proceed straight to Submit.
 
 - **Run Status**: Clicking on the "Check Run Status" button will show you the status (progress) of the specific Dagrun. 
 
