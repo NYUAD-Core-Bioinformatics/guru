@@ -315,6 +315,45 @@ Please note that under the "10x Sequence Run" DAG, you will have multiple option
 
 $~~~~$
 
+## Downstream Analysis
+
+The **Downstream Analysis** page has two views: **Default** and **Custom**. Both let you specify a project, working directory, and email address. Choose the view that matches how you want to select the input data and workflow.
+
+### Default view
+
+In the **Default** view, GURU matches the FASTQ files using a Net-ID and lets you select one or more downstream workflows.
+
+<img src="img/guru_default_view.png"  align="left" />
+
+- **Project Name:** Enter a project name, such as `scRNA`, `zebrafish`, or a ticket number. Spaces and special characters are converted to underscores.
+- **Working Directory:** Enter the path to the demultiplexed FASTQ directory produced by the NYUAD QC/QT process through the BioSAILs workflow management system.
+- **Email Address:** Enter one or more email addresses, separated by commas, to receive run notifications.
+- **Net-ID:** Enter your NYU Net-ID. This is required to map the run to your account when triggering downstream analysis after QC/QT.
+- **Downstream Workflow:** Select a workflow to run after QC/QT finishes, such as RNA-seq, WGS, WES, ATAC, or ChIP. Select **None** to run QC/QT only.
+
+Select **Add another Analysis +** to add another Net-ID and workflow pair. This lets you trigger multiple downstream analyses from a single run, including analyses associated with different Net-IDs. Use the **−** button to remove a pair.
+
+A Net-ID and workflow must be provided together to trigger downstream analysis. If you leave the workflow set to **None**, you can submit the run for QC/QT without downstream analysis.
+
+### Custom view
+
+In the **Custom** view, you specify how GURU should match paired FASTQ files and choose a workflow.
+
+<img src="img/guru_default_view.png"  align="left" />
+
+- **Project Name:** Enter a project name, such as `scRNA`, `zebrafish`, or a ticket number. Spaces and special characters are converted to underscores.
+- **Working Directory:** Enter the path to the directory containing the FASTQ files.
+- **Email Address:** Enter one or more email addresses, separated by commas, to receive run notifications.
+
+Place the FASTQ files in the specified working directory. Under **FASTQ matching**, enter the filename suffixes used by your paired files:
+
+- **R1 extension:** The suffix for read 1 files.
+- **R2 extension:** The suffix for read 2 files.
+
+For example, for `wt1_7d_read1.fastq.gz`, enter `_read1.fastq.gz` for R1 and `_read2.fastq.gz` for R2.
+
+Under **Custom workflow**, select a workflow from the **Downstream Workflow** list, or upload a YAML workflow file from your computer. The uploaded YAML is copied to the working directory and takes priority over the workflow selected in the list.
+
 ## Contact
 
 If you need to contact us for feedback, queries, or to raise an issue, you can do so using the issues page [Github issue](https://github.com/NYUAD-Core-Bioinformatics/guru/issues).
