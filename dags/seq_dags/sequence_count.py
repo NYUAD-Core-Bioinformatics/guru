@@ -14,28 +14,25 @@ def sequence_count_task(ds, **kwargs):
 
     input_file = (
         f"{scratch_dir}/Unaligned/data/processed/"
-        f"{jira_ticket}_data/multiqc_general_stats.txt"
+        f"methods_report/{jira_ticket}_qc_summary.tsv"
     )
-
     output_file = f"{scratch_dir}/Unaligned/sequence_reads.txt"
 
-    sample_col = "Sample"
-    count_col = "FastQC_mqc-generalstats-fastqc-total_sequences"
+    sample_col = "sample"
+    count_col = "raw_read_pairs"
 
     ssh_hook = SSHHook(ssh_conn_id="guru_ssh")
     ssh = ssh_hook.get_conn()
     sftp = ssh.open_sftp()
 
     try:
-        # Check input file exists on remote server
         try:
             sftp.stat(input_file)
-        except FileNotFoundError:
+        except FileNotFoundError as exc:
             raise AirflowException(
                 f"Input file does not exist on remote server: {input_file}"
-            )
+            ) from exc
 
-        # Read remote input file
         with sftp.open(input_file, "r") as remote_file:
             file_content = remote_file.read()
 
@@ -44,40 +41,59 @@ def sequence_count_task(ds, **kwargs):
 
         reader = csv.DictReader(StringIO(file_content), delimiter="\t")
 
-        lines = []
-        lines.append(f"Threshold: {threshold}")
-        lines.append("")
+        if not reader.fieldnames:
+            raise AirflowException(f"Input TSV is empty or has no header: {input_file}")
 
-        for row in reader:
-            sample = row[sample_col]
-            total_seq = float(row[count_col])
+        missing_columns = [
+            column
+            for column in (sample_col, count_col)
+            if column not in reader.fieldnames
+        ]
+        if missing_columns:
+            raise AirflowException(
+                f"Missing required column(s) in {input_file}: "
+                f"{', '.join(missing_columns)}. "
+                f"Found: {', '.join(reader.fieldnames)}"
+            )
 
-            if "R1" in sample or "R2" in sample:
-                if total_seq < threshold:
-                    lines.append(f"❌ - {sample} - {total_seq}")
-                else:
-                    lines.append(f"✅ - {sample} - {total_seq}")
+        lines = [f"Threshold: {threshold:g}", ""]
+
+        for line_number, row in enumerate(reader, start=2):
+            sample = (row.get(sample_col) or "").strip()
+            count_value = (row.get(count_col) or "").strip()
+
+            if not sample:
+                lines.append(f"⚠️  Line {line_number}: missing sample name")
+                continue
+
+            try:
+                total_seq = float(count_value)
+            except ValueError:
+                lines.append(
+                    f"⚠️  {sample}: invalid {count_col} value {count_value!r}"
+                )
+                continue
+
+            status = "❌" if total_seq < threshold else "✅"
+            lines.append(f"{status} - {sample} - {total_seq:,.0f}")
 
         output_text = "\n".join(lines) + "\n"
 
-        # Write output file on remote server
         with sftp.open(output_file, "w") as remote_output:
             remote_output.write(output_text)
 
-        # Verify output file exists and has content
         try:
             output_stat = sftp.stat(output_file)
-        except FileNotFoundError:
+        except FileNotFoundError as exc:
             raise AirflowException(
                 f"Output file was not created on remote server: {output_file}"
-            )
+            ) from exc
 
         if output_stat.st_size == 0:
             raise AirflowException(
                 f"Output file is empty on remote server: {output_file}"
             )
 
-        # This return is stored automatically in XCom
         return output_text
 
     finally:

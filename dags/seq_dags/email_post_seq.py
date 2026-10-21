@@ -1,5 +1,4 @@
 import io
-import logging
 import os
 import smtplib
 
@@ -12,6 +11,9 @@ from airflow.hooks.base import BaseHook
 from airflow.providers.ssh.hooks.ssh import SSHHook
 
 from nyuad_cgsb_jira_client.jira_client import jira_client
+
+
+NO_DOWNSTREAM = "There is no downstream analysis chosen."
 
 
 def validate_sequence_count_xcom(kwargs):
@@ -32,6 +34,37 @@ def validate_sequence_count_xcom(kwargs):
     return output_text, failed_lines, has_failed_samples
 
 
+def get_downstream_analysis_summary(kwargs):
+    ti = kwargs["ti"]
+
+    summary = ti.xcom_pull(
+        task_ids="submit_downstream_workflow",
+        key="downstream_analysis_summary"
+    )
+
+    if summary:
+        return summary
+
+    downstream_analysis = kwargs["dag_run"].conf.get("downstream_analysis", [])
+
+    if not downstream_analysis:
+        return NO_DOWNSTREAM
+
+    selected_netids = [
+        item.get("netid")
+        for item in downstream_analysis
+        if item.get("netid")
+    ]
+
+    if not selected_netids:
+        return NO_DOWNSTREAM
+
+    return (
+        "Downstream analysis selected for the following Net-ID(s):\n"
+        + "\n".join([f"- {netid}" for netid in selected_netids])
+    )
+
+
 def get_remote_file_as_bytes(sftp, file_path):
     try:
         sftp.stat(file_path)
@@ -50,17 +83,21 @@ def get_remote_file_as_bytes(sftp, file_path):
 def generate_email_task(ds, **kwargs):
     dag_run = kwargs["dag_run"]
 
-    work_dir = dag_run.conf["work_dir"]
     scratch_dir = dag_run.conf["scratch_dir"]
     email_id = dag_run.conf["email_id"]
     miso_id = dag_run.conf["miso_id"]
     jira_ticket = dag_run.conf["jira_ticket"]
-    default = "Other_email"
 
     output_text, failed_lines, has_failed_samples = validate_sequence_count_xcom(kwargs)
+    downstream_summary = get_downstream_analysis_summary(kwargs)
 
-    multiqc_file_path = f"{scratch_dir}/Unaligned/data/processed/{jira_ticket}.html"
-    multiqc_file_name = os.path.basename(multiqc_file_path)
+    # multiqc_file_path = f"{scratch_dir}/Unaligned/data/processed/{jira_ticket}.html"
+    # multiqc_file_name = os.path.basename(multiqc_file_path)
+    methods_report_file_path = (
+        f"{scratch_dir}/Unaligned/data/processed/methods_report/"
+        f"{jira_ticket}_methods_report.html"
+    )
+    methods_report_file_name = os.path.basename(methods_report_file_path)
 
     unknown_barcodes_path = f"{scratch_dir}/Unaligned/Reports/Top_Unknown_Barcodes.csv"
     unknown_barcodes_name = os.path.basename(unknown_barcodes_path)
@@ -72,8 +109,15 @@ def generate_email_task(ds, **kwargs):
     attachments = []
 
     try:
-        multiqc_file_obj = get_remote_file_as_bytes(sftp, multiqc_file_path)
-        attachments.append((multiqc_file_name, multiqc_file_obj, "html"))
+        # multiqc_file_obj = get_remote_file_as_bytes(sftp, multiqc_file_path)
+        # attachments.append((multiqc_file_name, multiqc_file_obj, "html"))
+
+        methods_report_file_obj = get_remote_file_as_bytes(
+            sftp, methods_report_file_path
+        )
+        attachments.append(
+            (methods_report_file_name, methods_report_file_obj, "html")
+        )
 
         if has_failed_samples:
             unknown_file_obj = get_remote_file_as_bytes(sftp, unknown_barcodes_path)
@@ -88,7 +132,9 @@ def generate_email_task(ds, **kwargs):
     body = (
         f"Your recent run {jira_ticket} / Miso ID {miso_id} has successfully completed.\n\n"
         f"Run Path:- {scratch_dir}/Unaligned\n\n"
-        "MultiQC Summary report is attached.\n\n"
+        "The methods report is attached. The MultiQC report is available on the Jira ticket.\n\n"
+        "Downstream Analysis Summary\n\n"
+        f"{downstream_summary}\n\n"
     )
 
     if has_failed_samples:
@@ -115,8 +161,7 @@ def generate_email_task(ds, **kwargs):
     smtp_username = smtp_hook.login
     smtp_password = smtp_hook.password
 
-
-    default = "nyuad.cgsb.cb@nyu.edu"
+    default = "Specify_group_email"
     to = f"{email_id},{default}"
     recipients = [e.strip() for e in to.split(",")]
 
@@ -147,6 +192,7 @@ def email_jira_ticket_success(context):
     scratch_dir = context["dag_run"].conf["scratch_dir"]
 
     output_text, failed_lines, has_failed_samples = validate_sequence_count_xcom(context)
+    downstream_summary = get_downstream_analysis_summary(context)
 
     comment = (
         f"Your recent run {jira_ticket} / Miso ID {miso_id} has successfully completed.\n\n"
@@ -154,6 +200,7 @@ def email_jira_ticket_success(context):
         "{code}\n"
         f"{scratch_dir}/Unaligned/\n"
         "{code}\n"
+        "The MultiQC summary and methods report are attached.\n"
     )
 
     if has_failed_samples:
@@ -168,6 +215,13 @@ def email_jira_ticket_success(context):
         )
 
     comment += (
+        "\nDownstream Analysis Summary\n"
+        "{code}\n"
+        f"{downstream_summary}\n"
+        "{code}\n"
+    )
+
+    comment += (
         "\nRegards,\n"
         "NYU Abu Dhabi Core Bioinformatics\n"
     )
@@ -175,6 +229,10 @@ def email_jira_ticket_success(context):
     jira_client.add_comment(jira_ticket, comment)
 
     multiqc_file_path = f"{scratch_dir}/Unaligned/data/processed/{jira_ticket}.html"
+    methods_report_file_path = (
+        f"{scratch_dir}/Unaligned/data/processed/methods_report/"
+        f"{jira_ticket}_methods_report.html"
+    )
     unknown_barcodes_path = f"{scratch_dir}/Unaligned/Reports/Top_Unknown_Barcodes.csv"
 
     ssh_hook = SSHHook(ssh_conn_id="guru_ssh")
@@ -189,6 +247,16 @@ def email_jira_ticket_success(context):
             jira_ticket,
             attachment=multiqc_file_obj,
             filename=os.path.basename(multiqc_file_path)
+        )
+
+        methods_report_file_obj = get_remote_file_as_bytes(
+            sftp, methods_report_file_path
+        )
+        methods_report_file_obj.seek(0)
+        jira_client.add_attachment(
+            jira_ticket,
+            attachment=methods_report_file_obj,
+            filename=os.path.basename(methods_report_file_path),
         )
 
         if has_failed_samples:
@@ -209,3 +277,4 @@ def email_jira_ticket_success(context):
 def run_post_email_task(ds, **kwargs):
     email_jira_ticket_success(kwargs)
     generate_email_task(ds, **kwargs)
+

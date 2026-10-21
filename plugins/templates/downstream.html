@@ -1,0 +1,267 @@
+{% extends "appbuilder/baselayout.html" %}
+{% from 'airflow/_messages.html' import show_message %}
+
+{% block page_title %}Downstream Analysis{% endblock %}
+
+{% block head_css %}
+{{ super() }}
+{% if not appbuilder.app_theme %}
+<link rel="stylesheet" type="text/css" href="{{ url_for_asset('airflowDefaultTheme.css') }}">
+{% endif %}
+<link rel="stylesheet" type="text/css" href="{{ url_for_asset('materialIcons.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for_asset('main.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for_asset('loadingDots.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for_asset('bootstrap-datetimepicker.min.css') }}">
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='pin_32.png') }}">
+<style>
+  .workflow-page { max-width: 1120px; margin: 0 auto; padding: 34px 24px 56px; color: #263445; }
+  .workflow-hero { margin-bottom: 24px; }
+  .workflow-eyebrow { color: #52708e; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin: 0 0 8px; }
+  .workflow-hero h1 { font-size: 30px; font-weight: 700; margin: 0 0 8px; color: #1f2e3d; }
+  .workflow-hero p { margin: 0; color: #64748b; font-size: 15px; }
+  .workflow-card { background: #fff; border: 1px solid #e3eaf1; border-radius: 12px; box-shadow: 0 8px 24px rgba(34, 57, 80, .08); padding: 28px; }
+  .workflow-mode { border: 0; border-bottom: 1px solid #e7edf3; margin: 0 0 24px; padding: 0 0 20px; }
+  .workflow-mode legend { border: 0; color: #263445; font-size: 16px; font-weight: 700; margin: 0 0 14px; width: auto; }
+  .mode-choice { display: inline-flex; align-items: center; gap: 9px; margin: 0 22px 0 0; padding: 10px 15px; border: 1px solid #d8e1ea; border-radius: 8px; background: #f8fafc; cursor: pointer; font-weight: 600; }
+  .mode-choice input { margin: 0; accent-color: #1976d2; }
+  .workflow-section { padding: 4px 0 0; }
+  .workflow-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-bottom: 22px; }
+  .field-wrap { margin: 0; }
+  .field-wrap label { display: block; margin-bottom: 7px; color: #34465a; font-weight: 650; }
+  .field-wrap input.form-control, .field-wrap select.form-control { min-height: 42px; border-radius: 7px; border-color: #cbd6e2; box-shadow: none; }
+  .field-wrap input.form-control:focus, .field-wrap select.form-control:focus { border-color: #4388c7; box-shadow: 0 0 0 3px rgba(50, 125, 190, .12); }
+  .field-hint { display: block; color: #748397; font-size: 12px; margin-top: 6px; }
+  .field-error { display: block; color: #b42318; margin-top: 6px; font-size: 13px; }
+  .analysis-heading { border-top: 1px solid #e7edf3; padding-top: 20px; margin: 0 0 16px; }
+  .analysis-heading h2 { font-size: 18px; margin: 0 0 5px; color: #263445; font-weight: 700; }
+  .analysis-heading p { color: #748397; margin: 0; font-size: 13px; }
+  .analysis-block { background: #f8fafc; border: 1px solid #e2e9f0; border-radius: 9px; padding: 18px; margin: 0 0 14px; }
+  .analysis-fields { display: grid; grid-template-columns: minmax(180px, .7fr) minmax(280px, 1.3fr); gap: 18px; align-items: end; }
+  .analysis-fields .field-wrap { margin: 0; }
+  .analysis-fields input.form-control, .analysis-fields select.form-control { width: 100% !important; }
+  .analysis-row-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+  .remove-analysis { border: 0; background: transparent; color: #a33b37; font-weight: 600; padding: 4px 8px; }
+  .remove-analysis:hover { color: #7d211e; text-decoration: underline; }
+  .workflow-actions { display: flex; align-items: center; gap: 12px; border-top: 1px solid #e7edf3; margin-top: 24px; padding-top: 20px; }
+  .workflow-actions .btn { border-radius: 7px; font-weight: 650; padding: 9px 18px; }
+  .add-analysis { background: #fff; color: #1769aa; border: 1px solid #9fc3e2; }
+  .add-analysis:hover { background: #eff7fd; }
+  .submit-run { min-width: 130px; }
+  .required-label::after, label.required::after { content: " *"; color: #c0392b; }
+  @media (max-width: 760px) {
+    .workflow-page { padding: 24px 12px 38px; }
+    .workflow-card { padding: 18px 14px; }
+    .workflow-fields, .analysis-fields { grid-template-columns: 1fr; gap: 14px; }
+    .field-wrap input.form-control, .field-wrap select.form-control { width: 100% !important; }
+    .mode-choice { margin: 0 8px 8px 0; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="workflow-page">
+  {% include 'appbuilder/flash.html' %}
+  <header class="workflow-hero">
+    <p class="workflow-eyebrow">Workflow launcher</p>
+    <h1>Downstream Analysis</h1>
+    <p>Choose Default matching by Net-ID or Custom matching by FASTQ filename suffix.</p>
+  </header>
+
+  <form method="post" class="workflow-card" enctype="multipart/form-data">
+    {{ form.hidden_tag() if form.hidden_tag else form.csrf_token }}
+
+    <fieldset class="workflow-mode">
+      <legend>{{ form.view_mode.label.text }}</legend>
+      {% for value, label in form.view_mode.choices %}
+      <label class="mode-choice">
+        <input type="radio" name="view_mode" value="{{ value }}"
+               {% if form.view_mode.data == value %}checked{% endif %}
+               onchange="toggleViewMode()">
+        <span>{{ label }}</span>
+      </label>
+      {% endfor %}
+      {% for error in form.view_mode.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+    </fieldset>
+
+    <section id="default-section" class="workflow-section" {% if form.view_mode.data != 'default' %}style="display:none;"{% endif %}>
+      <div class="workflow-fields">
+        <div class="field-wrap">
+          {{ form.project_name.label(class_='required') }}
+          {{ form.project_name(class_='form-control', style='width:60%;', autocomplete='off') }}
+          <span class="field-hint">Spaces and special characters are converted to underscores.</span>
+          {% for error in form.project_name.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </div>
+        <div class="field-wrap">
+          {{ form.scratch_dir.label(class_='required') }}
+          {{ form.scratch_dir(class_='form-control', style='width:60%;', autocomplete='off') }}
+          {% for error in form.scratch_dir.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </div>
+        <div class="field-wrap">
+          {{ form.email_address.label(class_='required') }}
+          {{ form.email_address(class_='form-control', style='width:60%;') }}
+          {% for error in form.email_address.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </div>
+      </div>
+
+      <div class="analysis-heading"><h2>Analysis selection</h2><p>Choose a workflow and enter its Net-ID. Add another analysis if needed.</p></div>
+      <div id="analysis-container-default">
+        <div class="analysis-block">
+          <div class="analysis-fields">
+            <div class="field-wrap">
+              {{ form.downstream_netid.label(class_='required') }}
+              {{ form.downstream_netid(class_='analysis-netid form-control', style='width:20%;', onkeyup="checkAnalysisFields('default')", id='downstream_netid') }}
+              {% for error in form.downstream_netid.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div class="field-wrap">
+              {{ form.downstream_workflow.label(class_='required') }}
+              {{ form.downstream_workflow(class_='analysis-workflow form-control', style='width:25%;', onchange="checkAnalysisFields('default')", id='downstream_workflow') }}
+              {% for error in form.downstream_workflow.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+            </div>
+          </div>
+        </div>
+        {% for item in extra_analysis|default([]) %}
+        <div class="analysis-block">
+          <div class="analysis-fields">
+            <div class="field-wrap">
+              <label class="required-label">Net-ID</label>
+              <input type="text" class="analysis-netid form-control" name="extra_netid_{{ item.index }}" value="{{ item.netid }}" placeholder="Enter your net-id" onkeyup="checkAnalysisFields('default')">
+            </div>
+            <div class="field-wrap">
+              <label class="required-label">Downstream Workflow</label>
+              <select class="analysis-workflow form-control" name="extra_down_workflow_{{ item.index }}" onchange="checkAnalysisFields('default')">
+                {% for value, label in form.downstream_workflow.choices %}<option value="{{ value }}" {% if value == item.workflow %}selected{% endif %}>{{ label }}</option>{% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="analysis-row-actions"><button type="button" class="remove-analysis" onclick="removeAnalysis(this, 'default')">Remove analysis</button></div>
+        </div>
+        {% endfor %}
+      </div>
+      <button id="add-analysis-btn-default" class="btn add-analysis" type="button" onclick="addAnalysis('default')" style="display:none;">+ Add another analysis</button>
+    </section>
+
+    <section id="custom-section" class="workflow-section" {% if form.view_mode.data != 'custom' %}style="display:none;"{% endif %}>
+      <div class="workflow-fields">
+        <div class="field-wrap">
+          {{ form.custom_project_name.label(class_='required') }}
+          {{ form.custom_project_name(class_='form-control', style='width:60%;', autocomplete='off') }}
+          <span class="field-hint">Spaces and special characters are converted to underscores.</span>
+          {% for error in form.custom_project_name.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </div>
+        <div class="field-wrap">
+          {{ form.custom_scratch_dir.label(class_='required') }}
+          {{ form.custom_scratch_dir(class_='form-control', style='width:60%;', autocomplete='off') }}
+          {% for error in form.custom_scratch_dir.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </div>
+        <div class="field-wrap">
+          {{ form.custom_email_address.label(class_='required') }}
+          {{ form.custom_email_address(class_='form-control', style='width:60%;') }}
+          {% for error in form.custom_email_address.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </div>
+      </div>
+
+      <div class="analysis-heading"><h2>FASTQ matching</h2><p>Enter the filename suffixes used by your paired FASTQ files.</p></div>
+      <div class="analysis-fields">
+        <div class="field-wrap">
+          {{ form.custom_r1_extension.label(class_='required') }}
+          {{ form.custom_r1_extension(class_='form-control', style='width:100%;', autocomplete='off') }}
+          {% for error in form.custom_r1_extension.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </div>
+        <div class="field-wrap">
+          {{ form.custom_r2_extension.label(class_='required') }}
+          {{ form.custom_r2_extension(class_='form-control', style='width:100%;', autocomplete='off') }}
+          {% for error in form.custom_r2_extension.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </div>
+      </div>
+      <p class="field-hint">Example: for <code>wt1_7d_read1.fastq.gz</code>, enter <code>_read1.fastq.gz</code> for R1 and <code>_read2.fastq.gz</code> for R2.</p>
+
+      <div class="analysis-heading"><h2>Custom workflow</h2><p>If you upload a YAML file, it will be used instead of the workflow selected below.</p></div>
+      <div class="analysis-block">
+        <div class="field-wrap">
+          <label for="custom_workflow_upload">Upload workflow (optional)</label>
+          <input id="custom_workflow_upload" name="custom_workflow_upload" type="file" accept=".yml,.yaml" class="form-control">
+          <span class="field-hint">The uploaded YAML will be copied to the working directory and takes priority over the dropdown selection.</span>
+        </div>
+        <div class="field-wrap" style="margin-top:16px;">
+          {{ form.custom_downstream_workflow.label }}
+          {{ form.custom_downstream_workflow(class_='analysis-workflow form-control', style='width:100%;', id='custom_downstream_workflow') }}
+          {% for error in form.custom_downstream_workflow.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </div>
+      </div>
+    </section>
+    <div class="workflow-actions">
+      <button id="submit-run" class="btn btn-primary submit-run" type="submit">Submit run</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block tail_js %}
+{{ super() }}
+<script>
+let analysisIndex = {
+  default: {{ (extra_analysis|default([])|length) + 1 }},
+  custom: {{ (custom_extra_analysis|default([])|length) + 1 }}
+};
+
+const workflowOptions = `
+{% for value, label in form.downstream_workflow.choices %}
+  <option value="{{ value }}">{{ label }}</option>
+{% endfor %}
+`;
+
+function validWorkflow(value) {
+  return value !== "" && value !== "None" && value !== "none" && value !== "null";
+}
+
+function toggleViewMode() {
+  const mode = document.querySelector('input[name="view_mode"]:checked')?.value || 'default';
+  document.getElementById('default-section').style.display = mode === 'default' ? '' : 'none';
+  document.getElementById('custom-section').style.display = mode === 'custom' ? '' : 'none';
+}
+
+toggleViewMode();
+
+function checkAnalysisFields(mode) {
+  const container = document.getElementById(`analysis-container-${mode}`);
+  const lastBlock = container.querySelector('.analysis-block:last-child');
+  const netid = lastBlock.querySelector('.analysis-netid').value.trim();
+  const workflow = lastBlock.querySelector('.analysis-workflow').value;
+  document.getElementById(`add-analysis-btn-${mode}`).style.display =
+    netid !== "" && validWorkflow(workflow) ? "inline-block" : "none";
+}
+
+function addAnalysis(mode) {
+  const container = document.getElementById(`analysis-container-${mode}`);
+  const index = analysisIndex[mode]++;
+  const isCustom = mode === 'custom';
+  const netidName = isCustom ? `custom_extra_netid_${index}` : `extra_netid_${index}`;
+  const workflowName = isCustom ? `custom_extra_down_workflow_${index}` : `extra_down_workflow_${index}`;
+
+  const block = document.createElement('div');
+  block.className = 'analysis-block';
+  block.innerHTML = `
+    <div class="analysis-fields">
+      <div class="field-wrap">
+        <label class="required-label">Net-ID</label>
+        <input type="text" class="analysis-netid form-control" name="${netidName}" placeholder="Enter your net-id" onkeyup="checkAnalysisFields('${mode}')">
+      </div>
+      <div class="field-wrap">
+        <label class="required-label">Downstream Workflow</label>
+        <select class="analysis-workflow form-control" name="${workflowName}" onchange="checkAnalysisFields('${mode}')">
+          ${workflowOptions}
+        </select>
+      </div>
+    </div>
+    <div class="analysis-row-actions"><button type="button" class="remove-analysis" onclick="removeAnalysis(this, '${mode}')">Remove analysis</button></div>
+  `;
+  container.appendChild(block);
+  document.getElementById(`add-analysis-btn-${mode}`).style.display = 'none';
+}
+
+function removeAnalysis(button, mode) {
+  button.closest('.analysis-block').remove();
+  checkAnalysisFields(mode);
+}
+</script>
+{% endblock %}

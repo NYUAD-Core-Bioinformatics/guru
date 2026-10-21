@@ -21,7 +21,7 @@ def generate_demultiplex_slurm_job(kwargs):
 #SBATCH --ntasks=1
 #SBATCH --partition=gencore
 #SBATCH --cpus-per-task=28
-#SBATCH --time=1000:00:00
+#SBATCH --time=07:00:00
 #SBATCH --mem 420000
 
 
@@ -69,7 +69,6 @@ def submit_demultiplex_job_to_slurm(ssh, sftp, kwargs):
     output = execute_ssh_command_return_stdout_stderr(ssh,
                                                       slurm_command, logger)
     return output
-
 
 def generate_demultiplex_command(kwargs):
     dag_run = kwargs["dag_run"]

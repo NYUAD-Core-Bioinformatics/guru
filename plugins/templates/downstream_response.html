@@ -1,0 +1,76 @@
+{% extends 'appbuilder/baselayout.html' %}
+{% from 'airflow/_messages.html' import show_message %}
+
+{% block page_title %}Downstream Analysis Submitted{% endblock %}
+
+{% block head_css %}
+{{ super() }}
+{% if not appbuilder.app_theme %}
+<link rel="stylesheet" type="text/css" href="{{ url_for_asset('airflowDefaultTheme.css') }}">
+{% endif %}
+<link rel="stylesheet" type="text/css" href="{{ url_for_asset('materialIcons.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for_asset('main.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for_asset('loadingDots.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for_asset('bootstrap-datetimepicker.min.css') }}">
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='pin_32.png') }}">
+<style>
+  .result-page { max-width: 1000px; margin: 0 auto; padding: 36px 24px 56px; color: #263445; }
+  .result-card { background: #fff; border: 1px solid #e3eaf1; border-radius: 12px; box-shadow: 0 8px 24px rgba(34, 57, 80, .08); padding: 30px; }
+  .result-status { display: inline-flex; align-items: center; gap: 8px; color: #176b45; background: #edf8f1; border: 1px solid #c9ead5; border-radius: 20px; padding: 6px 12px; font-size: 13px; font-weight: 700; margin-bottom: 14px; }
+  .result-status::before { content: "✓"; font-size: 15px; }
+  .result-card h1 { color: #1f2e3d; font-size: 28px; font-weight: 700; margin: 0 0 8px; }
+  .result-intro { color: #64748b; margin: 0 0 24px; }
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 22px; }
+  .result-item { background: #f8fafc; border: 1px solid #e4ebf2; border-radius: 8px; padding: 14px 16px; min-width: 0; }
+  .result-label { display: block; color: #748397; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 6px; }
+  .result-value { display: block; color: #263445; overflow-wrap: anywhere; }
+  .result-card h2 { color: #263445; font-size: 17px; font-weight: 700; margin: 18px 0 12px; }
+  .analysis-list { list-style: none; margin: 0; padding: 0; }
+  .analysis-list li { background: #f8fafc; border: 1px solid #e4ebf2; border-radius: 8px; padding: 12px 15px; margin-bottom: 9px; overflow-wrap: anywhere; }
+  .analysis-list strong { color: #34465a; }
+  .result-actions { border-top: 1px solid #e7edf3; padding-top: 20px; margin-top: 22px; }
+  .result-actions .btn { border-radius: 7px; font-weight: 650; padding: 9px 17px; }
+  @media (max-width: 650px) { .result-page { padding: 24px 12px 38px; } .result-card { padding: 22px 16px; } .result-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="result-page">
+  {% include 'appbuilder/flash.html' %}
+  <section class="result-card">
+    <div class="result-status">Request submitted</div>
+    <h1>Downstream Analysis</h1>
+    <p class="result-intro">Your request was submitted to Airflow. You can review the selected run details below.</p>
+
+    <div class="result-grid">
+      <div class="result-item"><span class="result-label">Project name</span><span class="result-value">{{ data['project_name'] }}</span></div>
+      <div class="result-item"><span class="result-label">Working directory</span><span class="result-value">{{ data['scratch_dir'] }}</span></div>
+      <div class="result-item"><span class="result-label">Email address</span><span class="result-value">{{ data['email_address'] }}</span></div>
+    </div>
+
+    <h2>Selected analyses</h2>
+    <ul class="analysis-list">
+      {% for item in data['downstream_analysis'] %}
+      <li>
+        {% if item['netid'] %}<strong>Net-ID:</strong> {{ item['netid'] }}<br>{% else %}<strong>FASTQ matching:</strong> R1/R2 filename suffixes<br>{% endif %}
+        <strong>Workflow:</strong> {{ item['workflow'] }}
+      </li>
+      {% else %}
+      <li>No downstream workflow was selected.</li>
+      {% endfor %}
+    </ul>
+
+    <div class="result-actions"><a class="btn btn-primary" href="{{ data['status_url'] }}">Check Status</a></div>
+  </section>
+</div>
+{% endblock %}
+
+{% block tail_js %}
+{{ super() }}
+<script>
+var Airflow = { serverTimezone: '{{ server_timezone }}', defaultUITimezone: '{{ default_ui_timezone }}' };
+var hostName = '{{ hostname }}';
+var csrfToken = '{{ csrf_token() }}';
+$('time[title]').tooltip();
+</script>
+{% endblock %}
