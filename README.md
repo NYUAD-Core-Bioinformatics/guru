@@ -323,7 +323,7 @@ The **Downstream Analysis** page has two views: **Default** and **Custom**. Both
 
 In the **Default** view, GURU matches the FASTQ files using a Net-ID and lets you select one or more downstream workflows.
 
-<img src="img/guru_default_view.png"  align="left" width="800" />
+<img src="img/guru_default_view.png"   width="800" />
 
 - **Project Name:** Enter a project name, such as `scRNA`, `zebrafish`, or a ticket number. Spaces and special characters are converted to underscores.
 - **Working Directory:** Enter the path to the demultiplexed FASTQ directory produced by the NYUAD QC/QT process through the BioSAILs workflow management system.
@@ -339,7 +339,7 @@ A Net-ID and workflow must be provided together to trigger downstream analysis. 
 
 In the **Custom** view, you specify how GURU should match paired FASTQ files and choose a workflow.
 
-<img src="img/guru_default_view.png"  align="left" width="800" />
+<img src="img/guru_default_view.png"   width="800" />
 
 - **Project Name:** Enter a project name, such as `scRNA`, `zebrafish`, or a ticket number. Spaces and special characters are converted to underscores.
 - **Working Directory:** Enter the path to the directory containing the FASTQ files.
